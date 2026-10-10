@@ -23,7 +23,7 @@ jobs:
             bin: pc-checkup
             ext: ""
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
@@ -36,7 +36,7 @@ jobs:
           mkdir dist
           cp "target/release/${{ matrix.bin }}" "dist/pc-checkup-${GITHUB_REF_NAME}-${{ matrix.name }}${{ matrix.ext }}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.name }}
           path: dist/*
@@ -45,9 +45,9 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           path: dist
           merge-multiple: true
