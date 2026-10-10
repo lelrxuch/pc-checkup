@@ -4,6 +4,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Corregido
+
+- Con `sudo` en Linux, el reporte queda a nombre del usuario y no de root.
+
 ## [0.1.0]
 
 ### Agregado

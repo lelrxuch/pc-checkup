@@ -98,6 +98,7 @@ fn main() -> ExitCode {
         eprintln!("pc-checkup: no se pudo escribir {}: {e}", path.display());
         return ExitCode::FAILURE;
     }
+    restore_owner(&path);
 
     let shown = std::fs::canonicalize(&path).unwrap_or(path);
     println!("Reporte guardado en {}", shown.display());
@@ -109,6 +110,21 @@ fn main() -> ExitCode {
     }
     ExitCode::SUCCESS
 }
+
+/// Con `sudo` el reporte quedaría a nombre de root y el usuario no podría
+/// borrarlo ni editarlo; se devuelve a quien ejecutó sudo.
+#[cfg(unix)]
+fn restore_owner(path: &std::path::Path) {
+    let id = |var| std::env::var(var).ok().and_then(|v| v.parse::<u32>().ok());
+    if let (Some(uid), Some(gid)) = (id("SUDO_UID"), id("SUDO_GID")) {
+        if let Err(e) = std::os::unix::fs::chown(path, Some(uid), Some(gid)) {
+            eprintln!("No se pudo cambiar el dueño del reporte: {e}");
+        }
+    }
+}
+
+#[cfg(not(unix))]
+fn restore_owner(_path: &std::path::Path) {}
 
 fn default_file_name(hostname: Option<&str>) -> String {
     let host: String = hostname
