@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            bin: pc-checkup.exe
+            ext: .exe
+          - name: linux-x64
+            os: ubuntu-24.04
+            bin: pc-checkup
+            ext: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo test
+      - run: cargo build --release
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir dist
+          cp "target/release/${{ matrix.bin }}" "dist/pc-checkup-${GITHUB_REF_NAME}-${{ matrix.name }}${{ matrix.ext }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS.txt
+
+      - name: Notes from CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            /^## / { if (found) exit; if (index($0, "[" v "]")) { found = 1; next } }
+            found
+          ' CHANGELOG.md > notes.md
+          test -s notes.md || echo "Versión $version" > notes.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md

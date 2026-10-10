@@ -1,0 +1,27 @@
+[package]
+name = "pc-checkup"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Diagnóstico rápido de una PC con reporte HTML para el cliente"
+authors = ["Cristopher Contreras"]
+license = "MIT"
+repository = "https://github.com/lelrxuch/pc-checkup"
+readme = "README.md"
+publish = false
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sysinfo = { version = "0.39", default-features = false, features = ["system", "disk"] }
+
+[target.'cfg(windows)'.dependencies]
+wmi = "0.18"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "z"
+panic = "abort"
